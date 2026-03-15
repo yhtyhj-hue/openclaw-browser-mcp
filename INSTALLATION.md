@@ -38,7 +38,7 @@ uvicorn app.main:app --reload
 | 组件 | 要求 |
 |------|------|
 | 操作系统 | Linux / macOS / Windows (WSL2) |
-| Python | 3.11+ (本地运行时) |
+| Python | 3.11 或 3.12 推荐；3.13 需使用当前 requirements 中的宽松版本 |
 | Docker | 20.10+ (Docker 方式) |
 | 内存 | 4GB+ |
 | 磁盘 | 5GB+ (用于浏览器) |

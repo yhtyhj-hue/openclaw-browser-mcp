@@ -1,16 +1,16 @@
-# 核心框架
-fastapi==0.104.1
-uvicorn==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+# 核心框架（若用 Python 3.13 需以下新版本；3.11/3.12 也可用）
+fastapi>=0.104.1
+uvicorn>=0.24.0
+pydantic>=2.6.0,<3
+pydantic-settings>=2.2.0
 
-# 浏览器自动化
-playwright==1.40.0
+# 浏览器自动化（1.49+ 拉取支持 Python 3.13 的 greenlet）
+playwright>=1.49.0
 
 # 验证码处理
 pytesseract==0.3.10
-opencv-python==4.8.1.5
-Pillow==10.1.0
+opencv-python==4.8.1.78
+Pillow>=10.2.0
 
 # HTTP 客户端
 requests==2.31.0
