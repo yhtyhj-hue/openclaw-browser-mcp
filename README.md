@@ -1,38 +1,90 @@
-# README.md
+# OpenClaw Browser MCP Server
 
-## 项目描述 (Project Description)
-OpenClaw Browser MCP 是一个功能强大的浏览器扩展，旨在提升用户的网络浏览体验。它提供了多种实用工具和功能，令用户能够更加高效地访问和利用网络资源。
+为 OpenClaw AI 提供浏览器自动化、页面理解、验证码识别的 MCP 服务（RESTful API）。
 
-OpenClaw Browser MCP is a powerful browser extension designed to enhance user web browsing experience. It offers a variety of useful tools and features, enabling users to access and utilize web resources more efficiently.
+## 功能概览
 
-## 特性 (Features)
-- **实时数据监控 (Real-time Data Monitoring)**: 实时获取网页上的数据和指标，提高决策效率。
-- **多语言支持 (Multilingual Support)**: 支持多种语言，满足全球用户的需求。
-- **用户友好界面 (User-friendly Interface)**: 简洁直观的设计，使用户能够迅速上手。
+- **浏览器自动化**：基于 Playwright，多会话、导航、点击、输入、截图、执行脚本等
+- **验证码处理**：图片/滑块/reCAPTCHA 等检测与求解（见 [CAPTCHA_HANDLING.md](CAPTCHA_HANDLING.md)）
+- **内容提取**：链接、图片、表单、表格、结构化提取
+- **监控与日志**：Prometheus 指标、健康检查（见 [MONITORING.md](MONITORING.md)）
+- **API 文档**：启动后访问 `/api/docs`（Swagger）、`/api/redoc`
 
-- **Real-time Data Monitoring**: Get real-time data and metrics from web pages to improve decision-making efficiency.
-- **Multilingual Support**: Supports multiple languages to meet the needs of global users.
-- **User-friendly Interface**: Simple and intuitive design allows users to quickly get started.
+## 快速开始
 
-## 安装 (Installation)
-1. 克隆此仓库： `git clone https://github.com/yhtyhj-hue/openclaw-browser-mcp.git`
-2. 进入目录： `cd openclaw-browser-mcp`
-3. 安装依赖项： `npm install` (或其他适用的包管理工具)
+### 环境要求
 
-1. Clone this repository: `git clone https://github.com/yhtyhj-hue/openclaw-browser-mcp.git`
-2. Navigate into the directory: `cd openclaw-browser-mcp`
-3. Install dependencies: `npm install` (or other applicable package manager)
+| 项目     | 要求 |
+|----------|------|
+| Python   | 3.11 或 3.12 推荐（3.13 见 [INSTALLATION.md](INSTALLATION.md)） |
+| 内存/磁盘 | 4GB+ / 5GB+（含浏览器） |
 
-## 使用方法 (Usage)
-- 在浏览器中启用扩展后，您可以通过点击工具栏图标访问其功能。
-- 使用快捷键可以快速启动和访问常用功能。
+### 本地运行
 
-- After enabling the extension in your browser, you can access its features by clicking the toolbar icon.
-- You can quickly launch and access common functions using keyboard shortcuts.
+```bash
+# 克隆后进入项目目录
+cd openclaw-browser-mcp
 
-## 开发 (Development)
-- 查看开发文档，以获取有关扩展功能和架构的详细信息。
-- 提交您的贡献和bug报告，帮助改进项目。
+# 虚拟环境 + 依赖
+python3 -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -r requirements.txt
+playwright install chromium
 
-- Refer to the development documentation for detailed information on the extension's features and architecture.
-- Submit your contributions and bug reports to help improve the project.
+# 启动服务（默认 http://0.0.0.0:8000）
+make dev
+# 或: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+健康检查：`curl http://localhost:8000/health`  
+API 文档：http://localhost:8000/api/docs
+
+### Docker 部署
+
+生产与监控编排见 [DEPLOYMENT.md](DEPLOYMENT.md)，使用 `docker-compose.prod.yml`、`docker-compose.monitoring.yml` 等。
+
+```bash
+# 示例：生产编排
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+## 项目结构
+
+```
+├── app/
+│   ├── main.py          # FastAPI 入口
+│   ├── api/             # 路由（健康、会话、浏览器、验证码、内容、交互、高级、工作流）
+│   ├── browser/         # 浏览器会话管理
+│   ├── captcha/         # 验证码检测与求解
+│   ├── content/         # 内容提取
+│   └── monitoring/      # 指标与中间件
+├── requirements.txt
+├── Makefile             # make help 查看命令
+├── API.md               # 接口说明
+├── INSTALLATION.md      # 安装与系统要求
+├── DEPLOYMENT.md        # 部署与编排
+├── CAPTCHA_HANDLING.md  # 验证码处理说明
+└── MONITORING.md        # 监控与告警
+```
+
+## 常用命令（Makefile）
+
+| 命令 | 说明 |
+|------|------|
+| `make install` | 安装 Python 依赖 |
+| `make install-browser` | 安装 Playwright 浏览器（chromium） |
+| `make dev` | 开发模式运行（端口 8000） |
+| `make test` | 运行测试 |
+| `make lint` | 代码检查（black + flake8） |
+
+## 文档索引
+
+- [INSTALLATION.md](INSTALLATION.md) — 安装与环境配置
+- [API.md](API.md) — 完整 API 说明（40+ 端点）
+- [DEPLOYMENT.md](DEPLOYMENT.md) — 生产部署与 Docker 编排
+- [CAPTCHA_HANDLING.md](CAPTCHA_HANDLING.md) — 验证码处理
+- [MONITORING.md](MONITORING.md) — 监控与 Grafana/ELK
+
+## 技术栈
+
+Python 3.11+ · FastAPI · Playwright · OpenCV · Tesseract · Prometheus · Docker
