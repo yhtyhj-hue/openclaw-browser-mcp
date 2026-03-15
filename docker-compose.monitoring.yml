@@ -1,0 +1,110 @@
+version: '3.9'
+
+services:
+  # 应用主服务
+  app:
+    image: openclaw-browser-mcp:latest
+    container_name: openclaw-app
+    ports:
+      - "8000:8000"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8000
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      - prometheus
+      - elasticsearch
+    networks:
+      - monitoring
+
+  # Prometheus - 时间序列数据库
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - monitoring
+    restart: always
+
+  # Grafana - 可视化仪表板
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+    restart: always
+
+  # Elasticsearch - 日志存储
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.0.0
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    networks:
+      - monitoring
+    restart: always
+
+  # Kibana - 日志可视化
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.0.0
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring
+    restart: always
+
+  # Filebeat - 日志收集
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.0.0
+    container_name: filebeat
+    user: root
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs:/logs:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: filebeat -e -strict.perms=false
+    depends_on:
+      - elasticsearch
+    networks:
+      - monitoring
+    restart: always
+
+networks:
+  monitoring:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  elasticsearch-data:
